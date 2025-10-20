@@ -57,7 +57,7 @@ mongo_uri = "mongodb+srv://user1:user1@cluster0.hdwflim.mongodb.net/?retryWrites
 import json
 from pymongo import MongoClient
 
-# 1. URI de tu cluster (reemplaza user1 y password si es necesario)
+# 1. URI de tu cluster 
 mongo_uri = "mongodb+srv://user1:user1@cluster0.hdwflim.mongodb.net/?retryWrites=true&w=majority"
 
 # 2. Conectar al cluster

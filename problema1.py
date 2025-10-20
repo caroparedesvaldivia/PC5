@@ -1,19 +1,16 @@
-# ============================
+
 # Análisis Airbnb Lisboa
-# ============================
 
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# ============================
-# 1. Análisis exploratorio de los datos
-# ============================
+# 1. Análisis  de los datos
 
-# Leemos el dataset
+# Leemos 
 df = pd.read_csv("airbnb.csv")
 
-# Exploración básica
+# Exploración 
 print("Dimensiones del dataset:", df.shape)
 print("\nColumnas del dataset:\n", df.columns)
 print("\nPrimeras filas:\n", df.head())
@@ -21,9 +18,7 @@ print("\nInformación general:\n")
 df.info()
 print("\nEstadísticas descriptivas:\n", df.describe())
 
-# ============================
 # 2. Filtrados de datos
-# ============================
 
 # --- CASO 1: Alicia ---
 # Requisitos:
@@ -73,9 +68,7 @@ diana = diana.sort_values(
 
 print("\nOpciones para Diana:\n", diana)
 
-# ============================
 # 3. Agrupamientos de datos
-# ============================
 
 # Agrupamiento 1: Precio promedio por tipo de habitación
 group1 = df.groupby("room_type")["price"].mean().sort_values(ascending=False)
