@@ -1,53 +1,79 @@
-import os
 import zipfile
+import os
 import pandas as pd
 from pymongo import MongoClient
 
-# 1. Definir rutas
-zip_path = "0303.zip"           # Archivo subido
-extract_path = "datos_youtube"  # Carpeta destino
+# 1. Ruta del ZIP y carpeta de extracción
+zip_path = "0303.zip"
+extract_dir = "datos_youtube"
 
-# 2. Descomprimir el ZIP
-with zipfile.ZipFile(zip_path, "r") as zip_ref:
-    zip_ref.extractall(extract_path)
+# 2. Crear carpeta si no existe y extraer ZIP
+if not os.path.exists(extract_dir):
+    os.makedirs(extract_dir)
+    with zipfile.ZipFile(zip_path, "r") as zip_ref:
+        zip_ref.extractall(extract_dir)
+    print(f"Archivos extraídos en: {extract_dir}")
+else:
+    print("La carpeta ya existe, se omite la descompresión.")
 
-print("Archivos extraídos en:", extract_path)
-print("Contenido de la carpeta:", os.listdir(extract_path))
+# 3. Listar archivos de la carpeta
+files = os.listdir(os.path.join(extract_dir, "0303"))
+print("Contenido de la carpeta principal:", files)
 
-# 3. Leer el archivo .txt (ajusta el nombre si es distinto)
-file_path = os.path.join(extract_path, "0303.txt")
-df = pd.read_csv(file_path, sep="\t", header=None)
+# 4. Leer el archivo de datos (ejemplo '3.txt')
+txt_file = os.path.join(extract_dir, "0303", "3.txt")
+df = pd.read_csv(txt_file, sep="\t", header=None, usecols=range(10))
 
-# 4. Asignar nombres de columnas
+# 5. Asignar nombres de columnas
 df.columns = [
     "video_id", "uploader", "age", "category", "length",
     "views", "rate", "ratings", "comments", "related_IDs"
 ]
 
-# 5. Seleccionar columnas relevantes
-df_filtrado = df[["video_id", "age", "category", "views", "rate"]]
+print(f"Archivo leído correctamente. Filas: {df.shape[0]}  Columnas: {df.shape[1]}")
 
-# 6. Filtrar por categorías específicas (puedes cambiarlas)
-categorias_permitidas = ["Music", "Comedy", "Sports"]
-df_filtrado = df_filtrado[df_filtrado["category"].isin(categorias_permitidas)]
+# 6. Seleccionar columnas importantes
+df_filtered = df[["video_id", "age", "category", "views", "rate"]]
 
-print("\nDatos filtrados por categorías:")
-print(df_filtrado.head())
+# 7. Filtrar por categorías deseadas (ejemplo Music y Comedy)
+categorias = ["Music", "Comedy"]
+df_filtered = df_filtered[df_filtered["category"].isin(categorias)]
 
-# 7. Exportar a MongoDB
-try:
-    client = MongoClient("mongodb://localhost:27017/")  # Cambiar si usas MongoDB Atlas
-    db = client["youtube_db"]
-    collection = db["videos_filtrados"]
+print("Datos filtrados por categoría:")
+print(df_filtered.head())
 
-    collection.insert_many(df_filtrado.to_dict("records"))
-    print("\nDatos exportados correctamente a MongoDB.")
-    print("Base de datos: youtube_db | Colección: videos_filtrados")
+# 8. Exportar a CSV y JSON
+csv_path = "youtube_filtrado.csv"
+json_path = "youtube_filtrado.json"
 
-except Exception as e:
-    print("\nNo se pudo conectar a MongoDB:", e)
+df_filtered.to_csv(csv_path, index=False)
+df_filtered.to_json(json_path, orient="records", lines=True)
 
-# 8. Guardar una copia local en CSV
-df_filtrado.to_csv("youtube_filtrado.csv", index=False)
-print("\nArchivo 'youtube_filtrado.csv' guardado correctamente.")
+print(f"Datos exportados a CSV: {csv_path}")
+print(f"Datos exportados a JSON: {json_path}")
 
+# 9. Conectar a MongoDB Atlas
+mongo_uri = "mongodb+srv://user1:user1@cluster0.hdwflim.mongodb.net/?retryWrites=true&w=majority"
+import json
+from pymongo import MongoClient
+
+# 1. URI de tu cluster (reemplaza user1 y password si es necesario)
+mongo_uri = "mongodb+srv://user1:user1@cluster0.hdwflim.mongodb.net/?retryWrites=true&w=majority"
+
+# 2. Conectar al cluster
+client = MongoClient(mongo_uri)
+
+# 3. Crear o usar una base de datos y colección
+db = client["youtube_db"]           # nombre de la base de datos
+collection = db["videos_filtrados"] # nombre de la colección
+
+# 4. Leer los datos del JSON exportado
+with open("youtube_filtrado.json", "r") as f:
+    records = [json.loads(line) for line in f]  # línea por línea
+
+# 5. Insertar los registros en MongoDB
+if records:
+    collection.insert_many(records)
+    print(f"{len(records)} registros insertados en MongoDB.")
+else:
+    print("No hay registros para insertar.")
